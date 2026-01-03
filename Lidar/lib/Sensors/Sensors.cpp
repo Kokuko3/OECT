@@ -1,9 +1,10 @@
-#include "RangeFinder.h"
+#include "Sensors.h"
 
-// One instance per sensor
+Adafruit_AS5600 as5600;
 static Adafruit_VL53L0X lox1;
 static Adafruit_VL53L0X lox2;
 
+// Setup the two VL53L0X sensors with given XSHUT pins and retries
 bool loxTestSetup(int XSHUT1_pin, int XSHUT2_pin, int retries) {
     Wire.begin();
 
@@ -49,7 +50,7 @@ bool loxTestSetup(int XSHUT1_pin, int XSHUT2_pin, int retries) {
     return lox1_initialized && lox2_initialized;
 }
 
-
+// Read distances from both VL53L0X sensors
 std::tuple<uint16_t, uint16_t> loxRead() {
     VL53L0X_RangingMeasurementData_t measure1;
     VL53L0X_RangingMeasurementData_t measure2;
@@ -63,4 +64,24 @@ std::tuple<uint16_t, uint16_t> loxRead() {
     return std::make_tuple(distance1, distance2);
 }
 
+//Setup the AS5600 magnetic encoder with retries
+bool encoderSetup(int retries) {
+    bool as5600_initialized = false;
+    for (int i = 0; i < retries && !as5600_initialized; i++) {
+        if (as5600.begin()) {
+            as5600_initialized = true;
+            Serial.println("AS5600 sensor initialized");
+        }
+        delay(50);
+    }
+    if (!as5600_initialized) Serial.println("Failed to initialize AS5600");
+    return as5600_initialized;
+}
 
+// Read raw and processed angle from AS5600 encoder
+std::tuple<uint16_t, float, float> readEncoder() {
+    uint16_t raw = as5600.getRawAngle();
+    float degrees = (raw * 360) / 4096;
+    float rads = degrees * (PI / 180);
+    return std::make_tuple(raw, degrees, rads);
+}
