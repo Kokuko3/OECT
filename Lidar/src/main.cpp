@@ -7,6 +7,8 @@ int retries = 10;
 
 void setup() {
   Serial.begin(115200);
+  delay(2000);
+  Serial.println("Setup started");
   loxTestSetup(XSHUT1_pin, XSHUT2_pin, retries);
   encoderSetup(retries);
 }
